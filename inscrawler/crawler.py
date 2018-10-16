@@ -22,7 +22,7 @@ class Logging(object):
         try:
             timestamp  = int(time.time())
             self.cleanup(timestamp)
-            self.logger = open('/tmp/%s-%s.log' % (Logging.PREFIX, timestamp), 'w')
+            self.logger = open('/tmp/%s-%s.log' % (Logging.PREFIX, timestamp), 'w', encoding='utf-8')
             self.log_disable = False
         except:
             self.log_disable = True
@@ -111,7 +111,8 @@ class InsCrawler(Logging):
     def get_latest_posts_by_tag(self, tag, num):
         url = '%s/explore/tags/%s/' % (InsCrawler.URL, tag)
         self.browser.get(url)
-        return self._get_posts(num)
+        return self._get_posts_full(num)
+        # return self._get_posts(num)
 
     def auto_like(self, tag='', maximum=1000):
         self.login()
@@ -158,7 +159,11 @@ class InsCrawler(Logging):
 
         # Fetching all posts
         for _ in range(num):
-            check_next_post(cur_key)
+            try:
+                check_next_post(cur_key)
+            except Exception:
+                print("Don't have enough post,will return!")
+                break
             dict_post = {}
 
             # Fetching datetime and url as key
@@ -170,15 +175,22 @@ class InsCrawler(Logging):
             datetime = ele_datetime.get_attribute('datetime')
             dict_post['datetime'] = datetime
 
+            dict_post['author_avatar'] = browser.find_one('._6q-tv').get_property('src')
+            dict_post['author_name'] = browser.find_one('.e1e1d>a').text
+            dict_post['content'] = browser.find_one('.C4VMK>span').text
+
             # Fetching all img
             content = None
             img_urls = set()
             while True:
-                ele_imgs = browser.find('._97aPb img', waittime=10)
+                ele_imgs = browser.find('._97aPb img', waittime=20)
                 for ele_img in ele_imgs:
                     if content is None:
                         content = ele_img.get_attribute('alt')
-                    img_urls.add(ele_img.get_attribute('src'))
+                    try:
+                        img_urls.add(ele_img.get_attribute('src'))
+                    except Exception:
+                        continue
 
                 next_photo_btn = browser.find_one('._6CZji .coreSpriteRightChevron')
                 if next_photo_btn:
@@ -187,7 +199,7 @@ class InsCrawler(Logging):
                 else:
                     break
 
-            dict_post['content'] = content
+            # dict_post['content'] = browser.find_one('.C4VMK>span').text #content
             dict_post['img_urls'] = list(img_urls)
 
             # Fetching comments
