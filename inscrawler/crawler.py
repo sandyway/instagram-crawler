@@ -176,8 +176,8 @@ class InsCrawler(Logging):
             dict_post['datetime'] = datetime
 
             dict_post['author_avatar'] = browser.find_one('._6q-tv').get_property('src')
-            dict_post['author_name'] = browser.find_one('.e1e1d>a').text
-            dict_post['content'] = browser.find_one('.C4VMK>span').text
+            dict_post['author_name'] = browser.find_one('.e1e1d a').text
+            dict_post['content'] = browser.find_one('.C4VMK span').text
 
             # Fetching all img
             content = None
