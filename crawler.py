@@ -11,6 +11,9 @@ import json
 from io import open
 import pymysql
 
+is_debug = True
+
+
 def usage():
     return '''
         python crawler.py posts -u cal_foodie -n 100 -o ./output
@@ -23,7 +26,7 @@ def usage():
 
 
 def connect_db():
-    return pymysql.connect(host='localhost',
+    return pymysql.connect(host= '192.168.1.102' if is_debug else '35.164.78.70',
                            port=3306,
                            user='root',
                            # password='12345678',
@@ -33,6 +36,29 @@ def connect_db():
 
 
 con = connect_db()
+
+
+def truncate_history_result():
+    cur = con.cursor();
+    try:
+        sql_str = "SET foreign_key_checks = OFF"
+        cur.execute(sql_str)
+        sql_str = "TRUNCATE TABLE T_POST_COMMENT"
+        cur.execute(sql_str)
+        sql_str = "TRUNCATE TABLE T_POST_IMAGE_URL"
+        cur.execute(sql_str)
+        sql_str = "TRUNCATE TABLE T_POST"
+        cur.execute(sql_str)
+    except Exception as e:
+        print(e)
+        con.rollback()
+    finally:
+        sql_str = "SET foreign_key_checks = ON"
+        cur.execute(sql_str)
+        cur.close()
+
+
+truncate_history_result()
 
 
 def insert_row(table_name, column_names, values_format, values):
